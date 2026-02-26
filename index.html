@@ -6,48 +6,94 @@
 
 <style>
 body{
-  font-family:Arial;
-  background:#f2f2f2;
-  text-align:center;
+  font-family:'Arial', sans-serif;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  text-align:right;
   direction:rtl;
+  margin:0;
+  padding:0;
 }
 
 #loginBox{
-  margin-top:100px;
+  margin-top:50px;
+  background:white;
+  width:300px;
+  padding:20px;
+  border-radius:20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display:inline-block;
 }
 
 #chatBox{
   display:none;
   margin-top:20px;
+  width:90%;
+  max-width:600px;
+  margin:auto;
 }
 
 #messages{
-  height:300px;
+  height:400px;
   overflow-y:auto;
   background:white;
-  padding:10px;
-  border-radius:10px;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
   margin-bottom:10px;
+}
+
+.message {
+  padding:8px 12px;
+  border-radius:12px;
+  margin:5px 0;
+  max-width:70%;
+  word-wrap: break-word;
+  clear:both;
+  position: relative;
+}
+
+.message.left{
+  background:#ffe0f0;
+  float:left;
+}
+
+.message.right{
+  background:#ff4d6d;
+  color:white;
+  float:right;
+}
+
+.message .time{
+  display:block;
+  font-size:12px;
+  margin-top:5px;
+  color:#555;
 }
 
 input{
   padding:10px;
   margin:5px;
-  width:200px;
+  width:65%;
+  border-radius:10px;
+  border:1px solid #ccc;
 }
 
 button{
   padding:10px 15px;
   cursor:pointer;
+  border:none;
+  background:#ff4d6d;
+  color:white;
+  border-radius:10px;
 }
 </style>
 </head>
-
 <body>
 
 <div id="loginBox">
   <h2>🔐 دخول الغرفة</h2>
-  <input type="password" id="password" placeholder="اكتب كلمة السر">
+  <input type="text" id="username" placeholder="اكتب اسمك">
+  <input type="password" id="password" placeholder="كلمة السر">
   <button onclick="checkPassword()">دخول</button>
 </div>
 
@@ -62,22 +108,30 @@ button{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-// 🔹 هنا حطينا الـ config بتاعك
+// 🔹 Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyAXGS8i2-fHN8H9FE2jylKlOF9j3sgYxDA",
   authDomain: "star-8444d.firebaseapp.com",
   projectId: "star-8444d",
   storageBucket: "star-8444d.firebasestorage.app",
   messagingSenderId: "386147064751",
-  appId: "1:386147064751:web:411113abc86a47e65eed5a",
-  measurementId: "G-Y0SQ9ZQQQQ"
+  appId: "1:386147064751:web:411113abc86a47e65eed5a"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let myUsername = "";
+
 window.checkPassword = function(){
-  if(document.getElementById("password").value === "1234"){
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  if(username === ""){
+    alert("اكتب اسمك");
+    return;
+  }
+  if(password === "1234"){
+    myUsername = username;
     document.getElementById("loginBox").style.display="none";
     document.getElementById("chatBox").style.display="block";
   }else{
@@ -89,12 +143,16 @@ window.sendMessage = async function(){
   const msg = document.getElementById("msgInput").value;
   if(msg.trim()==="") return;
 
-  await addDoc(collection(db,"messages"),{
-    text: msg,
-    time: Date.now()
-  });
-
-  document.getElementById("msgInput").value="";
+  try{
+    await addDoc(collection(db,"messages"),{
+      text: msg,
+      username: myUsername,
+      time: Date.now()
+    });
+    document.getElementById("msgInput").value="";
+  }catch(e){
+    console.error("Error adding message:", e);
+  }
 }
 
 const q = query(collection(db,"messages"), orderBy("time"));
@@ -103,7 +161,20 @@ onSnapshot(q,(snapshot)=>{
   const messagesDiv = document.getElementById("messages");
   messagesDiv.innerHTML="";
   snapshot.forEach(doc=>{
-    messagesDiv.innerHTML += "<p>"+doc.data().text+"</p>";
+    const data = doc.data();
+    const div = document.createElement("div");
+    div.className = "message "+(data.username===myUsername?"right":"left");
+
+    // تحويل التاريخ
+    const date = new Date(data.time);
+    const dateString = date.toLocaleDateString("ar-EG");
+    const timeString = date.toLocaleTimeString("ar-EG");
+
+    div.innerHTML = "<b>"+data.username+"</b>: "+data.text+
+                    "<span class='time'>"+dateString+" "+timeString+"</span>";
+
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 });
 </script>
