@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>غرفة خاصة 🔐</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f2f2f2;
+  text-align:center;
+  direction:rtl;
+}
+
+#loginBox{
+  margin-top:100px;
+}
+
+#chatBox{
+  display:none;
+  margin-top:20px;
+}
+
+#messages{
+  height:300px;
+  overflow-y:auto;
+  background:white;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
+}
+
+input{
+  padding:10px;
+  margin:5px;
+  width:200px;
+}
+
+button{
+  padding:10px 15px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginBox">
+  <h2>🔐 دخول الغرفة</h2>
+  <input type="password" id="password" placeholder="اكتب كلمة السر">
+  <button onclick="checkPassword()">دخول</button>
+</div>
+
+<div id="chatBox">
+  <h3>💬 غرفة الدردشة</h3>
+  <div id="messages"></div>
+  <input type="text" id="msgInput" placeholder="اكتب رسالة">
+  <button onclick="sendMessage()">إرسال</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+// 🔹 هنا حطينا الـ config بتاعك
+const firebaseConfig = {
+  apiKey: "AIzaSyAXGS8i2-fHN8H9FE2jylKlOF9j3sgYxDA",
+  authDomain: "star-8444d.firebaseapp.com",
+  projectId: "star-8444d",
+  storageBucket: "star-8444d.firebasestorage.app",
+  messagingSenderId: "386147064751",
+  appId: "1:386147064751:web:411113abc86a47e65eed5a",
+  measurementId: "G-Y0SQ9ZQQQQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.checkPassword = function(){
+  if(document.getElementById("password").value === "1234"){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("chatBox").style.display="block";
+  }else{
+    alert("كلمة السر غلط");
+  }
+}
+
+window.sendMessage = async function(){
+  const msg = document.getElementById("msgInput").value;
+  if(msg.trim()==="") return;
+
+  await addDoc(collection(db,"messages"),{
+    text: msg,
+    time: Date.now()
+  });
+
+  document.getElementById("msgInput").value="";
+}
+
+const q = query(collection(db,"messages"), orderBy("time"));
+
+onSnapshot(q,(snapshot)=>{
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML="";
+  snapshot.forEach(doc=>{
+    messagesDiv.innerHTML += "<p>"+doc.data().text+"</p>";
+  });
+});
+</script>
+
+</body>
+</html>
