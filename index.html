@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>غرفة خاصة 🔐</title>
-
 <style>
 body{
   font-family:'Arial', sans-serif;
-  background: linear-gradient(135deg, #f6d365, #fda085);
+  background: linear-gradient(135deg, #f6d365, #fda085); /* خلفية بينك وردي */
   text-align:right;
   direction:rtl;
   margin:0;
@@ -16,7 +15,7 @@ body{
 
 #loginBox{
   margin-top:50px;
-  background:white;
+  background:#ffd1e8; /* صندوق وردي فاتح */
   width:300px;
   padding:20px;
   border-radius:20px;
@@ -35,7 +34,7 @@ body{
 #messages{
   height:400px;
   overflow-y:auto;
-  background:white;
+  background:#ffe0f7; /* صندوق الرسائل */
   padding:15px;
   border-radius:15px;
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
@@ -130,7 +129,7 @@ window.checkPassword = function(){
     alert("اكتب اسمك");
     return;
   }
-  if(password === "1234"){
+  if(password === "1234"){  // كلمة السر
     myUsername = username;
     document.getElementById("loginBox").style.display="none";
     document.getElementById("chatBox").style.display="block";
@@ -165,7 +164,6 @@ onSnapshot(q,(snapshot)=>{
     const div = document.createElement("div");
     div.className = "message "+(data.username===myUsername?"right":"left");
 
-    // تحويل التاريخ
     const date = new Date(data.time);
     const dateString = date.toLocaleDateString("ar-EG");
     const timeString = date.toLocaleTimeString("ar-EG");
