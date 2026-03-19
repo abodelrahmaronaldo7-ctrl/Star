@@ -2,220 +2,246 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>اM🌹</title>
-
+<title>Pink Chat 🌸</title>
 <style>
 body{
-  margin:0;
   font-family:Arial;
-  background:#ffd1dc;
+  background: linear-gradient(135deg,#f6d365,#fda085);
+  margin:0;
   direction:rtl;
-  display:flex;
-  flex-direction:column;
-  height:100vh;
 }
 
-/* شاشة الباسورد */
 #loginBox{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:#ffd1dc;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-
-#loginBox div{
-  background:white;
-  padding:30px;
+  margin:50px auto;
+  background:#ffd1e8;
+  width:320px;
+  padding:20px;
   border-radius:20px;
   text-align:center;
 }
 
-/* الرسائل */
+#chatBox{
+  display:none;
+  width:95%;
+  max-width:600px;
+  margin:20px auto;
+}
+
 #messages{
-  flex:1;
+  height:400px;
   overflow-y:auto;
-  padding:10px;
-}
-
-.msg{
-  max-width:70%;
-  padding:10px;
-  margin:5px;
+  background:#ffe0f7;
+  padding:15px;
   border-radius:15px;
-  color:white;
+}
+
+.message{
+  padding:10px;
+  margin:6px 0;
+  border-radius:12px;
+  max-width:75%;
   position:relative;
+  transition:0.2s ease;
 }
 
-.me{
-  margin-left:auto;
-  background:#4CAF50;
-}
-
-.other{
-  margin-right:auto;
-  background:#ff4d6d;
-}
+.left{ float:left; }
+.right{ float:right; color:white; }
 
 .time{
-  font-size:12px;
-  opacity:0.8;
+  display:block;
+  font-size:11px;
   margin-top:5px;
 }
 
-.delete{
-  position:absolute;
-  top:5px;
-  left:5px;
-  background:none;
-  border:none;
-  color:white;
-  cursor:pointer;
-}
-
-/* الإدخال */
-#inputBox{
-  display:flex;
-  padding:10px;
-  background:white;
+#replyPreview{
+  display:none;
+  background:#ffd1e8;
+  padding:8px;
+  border-right:4px solid #ff4d6d;
+  margin:8px 0;
+  border-radius:8px;
+  font-size:13px;
 }
 
 input{
-  flex:1;
+  width:70%;
   padding:10px;
   border-radius:10px;
   border:1px solid #ccc;
 }
 
 button{
-  margin-right:5px;
   padding:10px;
   border:none;
-  border-radius:10px;
   background:#ff4d6d;
   color:white;
+  border-radius:10px;
 }
 </style>
 </head>
-
 <body>
 
-<!-- 🔒 شاشة الباسورد -->
 <div id="loginBox">
-  <div>
-    <h3>🔒 كلمة السر</h3>
-    <input type="password" id="passInput" placeholder="ادخل الباسورد">
-    <br><br>
-    <button onclick="checkPassword()">دخول</button>
-  </div>
+  <h3>🔐 دخول الغرفة</h3>
+  <input type="text" id="username" placeholder="اسمك">
+  <input type="password" id="password" placeholder="كلمة السر">
+  <button onclick="checkPassword()">دخول</button>
 </div>
 
-<div id="messages"></div>
-
-<div id="inputBox">
-  <input id="msgInput" placeholder="اكتب رسالة...">
+<div id="chatBox">
+  <div id="messages"></div>
+  <div id="replyPreview"></div>
+  <input type="text" id="msgInput" placeholder="اكتب رسالة">
   <button onclick="sendMessage()">إرسال</button>
 </div>
 
 <script type="module">
-// 🔥 Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAXGS8i2-fHN8H9FE2jylKlOF9j3sgYxDA",
-  authDomain: "star-8444d.firebaseapp.com",
-  projectId: "star-8444d"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔒 الباسورد
-function checkPassword(){
-  const pass = document.getElementById("passInput").value;
+let myUsername="";
+let replyTo=null;
 
-  if(pass === "7/11/2024"){ // ✨ غير الباسورد هنا
+// حفظ الاسم
+window.onload=function(){
+  const saved=localStorage.getItem("myUsername");
+  if(saved) document.getElementById("username").value=saved;
+}
+
+window.checkPassword=function(){
+  const user=document.getElementById("username").value.trim();
+  const pass=document.getElementById("password").value;
+
+  if(!user){alert("اكتب اسمك");return;}
+
+  if(pass==="7/11/2024"){
+    myUsername=user;
+    localStorage.setItem("myUsername",user);
     document.getElementById("loginBox").style.display="none";
+    document.getElementById("chatBox").style.display="block";
   }else{
-    alert("❌ غلط");
+    alert("كلمة السر غلط");
   }
 }
-window.checkPassword = checkPassword;
 
-// 👤 اسم المستخدم (يتحفظ)
-let username = localStorage.getItem("username");
-
-if(!username){
-  username = prompt("اكتب اسمك:");
-  localStorage.setItem("username", username);
+// ألوان عشوائية
+const colors={};
+function getColor(name){
+  if(!colors[name]){
+    colors[name]='#'+Math.floor(Math.random()*16777215).toString(16);
+  }
+  return colors[name];
 }
 
-// 📩 إرسال
-async function sendMessage(){
-  const input = document.getElementById("msgInput");
-  if(input.value.trim()==="") return;
+// إرسال
+window.sendMessage=async function(){
+  const text=document.getElementById("msgInput").value;
+  if(!text.trim()) return;
 
   await addDoc(collection(db,"messages"),{
-    text: input.value,
-    username: username,
-    time: new Date()
+    text,
+    username:myUsername,
+    time:Date.now(),
+    reply:replyTo
   });
 
-  input.value="";
-}
-window.sendMessage = sendMessage;
-
-// 🕒 وقت
-function formatTime(date){
-  const d = date.toDate();
-  return d.getHours()+":"+d.getMinutes();
+  document.getElementById("msgInput").value="";
+  replyTo=null;
+  document.getElementById("replyPreview").style.display="none";
 }
 
-// ❌ حذف
-async function deleteMessage(id){
-  if(confirm("تمسح؟")){
-    await deleteDoc(doc(db,"messages",id));
-  }
-}
-window.deleteMessage = deleteMessage;
-
-// 📡 عرض
-const q = query(collection(db,"messages"), orderBy("time"));
+// عرض
+const q=query(collection(db,"messages"),orderBy("time"));
 
 onSnapshot(q,(snapshot)=>{
-  const messages = document.getElementById("messages");
-  messages.innerHTML="";
+  const box=document.getElementById("messages");
+  box.innerHTML="";
 
-  snapshot.forEach(docu=>{
-    const msg = docu.data();
-    const isMe = msg.username === username;
+  snapshot.forEach(doc=>{
+    const data=doc.data();
+    const div=document.createElement("div");
+    div.className="message "+(data.username===myUsername?"right":"left");
 
-    const div = document.createElement("div");
-    div.className = "msg " + (isMe ? "me" : "other");
+    div.style.background=data.username===myUsername?
+      "#ff4d6d":getColor(data.username);
 
-    div.innerHTML = `
-      <button class="delete" onclick="deleteMessage('${docu.id}')">❌</button>
-      <b>${msg.username}</b><br>
-      ${msg.text}
-      <div class="time">${formatTime(msg.time)}</div>
-    `;
+    // لو فيها رد
+    if(data.reply){
+      div.innerHTML+=`
+      <div style="
+        background:#ffd1e8;
+        padding:5px;
+        border-right:3px solid #ff4d6d;
+        margin-bottom:5px;
+        font-size:12px;
+        border-radius:6px;">
+        <b>${data.reply.username}</b><br>
+        ${data.reply.text}
+      </div>`;
+    }
 
-    messages.appendChild(div);
+    div.innerHTML+=`
+      <b>${data.username}</b><br>
+      ${data.text}
+      <span class="time">
+      ${new Date(data.time).toLocaleDateString("ar-EG")}
+      ${new Date(data.time).toLocaleTimeString("ar-EG")}
+      </span>`;
+
+    // سحب ناعم
+    let startX=0;
+
+    div.addEventListener("touchstart",e=>{
+      startX=e.touches[0].clientX;
+    });
+
+    div.addEventListener("touchmove",e=>{
+      let move=e.touches[0].clientX-startX;
+      if(move>0){
+        div.style.transform=`translateX(${move}px)`;
+      }
+      if(move>80){
+        setReply(data);
+      }
+    });
+
+    div.addEventListener("touchend",()=>{
+      div.style.transform="translateX(0)";
+    });
+
+    box.appendChild(div);
+    box.scrollTop=box.scrollHeight;
   });
-
-  messages.scrollTop = messages.scrollHeight;
 });
 
-// Enter للإرسال
-document.getElementById("msgInput").addEventListener("keypress",function(e){
-  if(e.key==="Enter"){
-    sendMessage();
-  }
-});
+// تحديد رد
+function setReply(data){
+  replyTo={
+    text:data.text,
+    username:data.username
+  };
+
+  const preview=document.getElementById("replyPreview");
+  preview.innerHTML=`
+    <b>رد على ${data.username}</b><br>
+    ${data.text}
+    <br><button onclick="cancelReply()">إلغاء</button>`;
+  preview.style.display="block";
+}
+
+window.cancelReply=function(){
+  replyTo=null;
+  document.getElementById("replyPreview").style.display="none";
+}
 </script>
 
 </body>
