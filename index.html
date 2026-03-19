@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title> 🌸 غرفه الدردشة </title>
+<title> 🌸 غرفه الدردشه  </title>
 <style>
 body{
   font-family:Arial;
@@ -34,7 +34,7 @@ body{
   padding:15px;
   border-radius:15px;
   display:flex;
-  flex-direction: column; /* الرسائل تحت بعض */
+  flex-direction: column;
 }
 
 .message{
@@ -46,14 +46,12 @@ body{
 }
 
 .left{
-  align-self:flex-start; /* على الشمال */
-  background:#6a5acd;
+  align-self:flex-start;
   color:white;
 }
 
 .right{
-  align-self:flex-end; /* على اليمين */
-  background:#ff4d6d;
+  align-self:flex-end;
   color:white;
 }
 
@@ -109,11 +107,11 @@ button{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-// 🔥 ضع هنا بياناتك من Firebase
+// ضع هنا بيانات Firebase الخاصة بيك
 const firebaseConfig = {
-  apiKey: "AIzaSyAXGS8i2-fHN8H9FE2jylKlOF9j3sgYxDA",
-  authDomain: "star-8444d.firebaseapp.com",
-  projectId: "star-8444d"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -122,15 +120,10 @@ const db = getFirestore(app);
 let myUsername="";
 let replyTo=null;
 
-// حفظ الاسم وتشغيل الشات تلقائي
+// حفظ الاسم تلقائياً
 window.onload=function(){
   const saved=localStorage.getItem("myUsername");
-  if(saved){
-    myUsername = saved;
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("chatBox").style.display="block";
-    document.getElementById("username").value = saved;
-  }
+  if(saved) document.getElementById("username").value=saved;
 }
 
 // التحقق من كلمة السر
@@ -138,8 +131,7 @@ window.checkPassword=function(){
   const user=document.getElementById("username").value.trim();
   const pass=document.getElementById("password").value;
   if(!user){alert("اكتب اسمك");return;}
-  
-  if(pass==="7/11/2024"){  // 🔑 كلمة السر الجديدة
+  if(pass==="7/11/2024"){  // كلمة السر المطلوبة
     myUsername=user;
     localStorage.setItem("myUsername",user);
     document.getElementById("loginBox").style.display="none";
@@ -147,6 +139,16 @@ window.checkPassword=function(){
   }else{
     alert("كلمة السر غلط");
   }
+}
+
+// ألوان ثابتة لكل مستخدم
+const colors={};
+function getColor(name){
+  if(!colors[name]){
+    const palette=['#ff4d6d','#6a5acd','#ff8c00','#32cd32','#20b2aa','#ff1493','#00ced1','#ff7f50'];
+    colors[name]=palette[Object.keys(colors).length % palette.length];
+  }
+  return colors[name];
 }
 
 // إرسال رسالة
@@ -166,19 +168,17 @@ window.sendMessage=async function(){
   document.getElementById("replyPreview").style.display="none";
 }
 
-// عرض الرسائل
+// عرض الرسائل تحت بعض
 const q=query(collection(db,"messages"),orderBy("time"));
-
 onSnapshot(q,(snapshot)=>{
   const box=document.getElementById("messages");
   box.innerHTML="";
-
-  snapshot.forEach(docu=>{
-    const data=docu.data();
+  snapshot.forEach(doc=>{
+    const data=doc.data();
     const div=document.createElement("div");
     div.className="message "+(data.username===myUsername?"right":"left");
+    div.style.background=getColor(data.username);
 
-    // لو الرسالة رد
     if(data.reply){
       div.innerHTML+=`
       <div style="
@@ -201,21 +201,12 @@ onSnapshot(q,(snapshot)=>{
       ${new Date(data.time).toLocaleTimeString("ar-EG")}
       </span>`;
 
-    // سحب ناعم لتحديد الرد
-    let startX=0;
-    div.addEventListener("touchstart",e=>{startX=e.touches[0].clientX;});
-    div.addEventListener("touchmove",e=>{
-      let move=e.touches[0].clientX-startX;
-      if(move>80){setReply(data);}
-    });
-    div.addEventListener("touchend",()=>{div.style.transform="translateX(0)";});
-
     box.appendChild(div);
     box.scrollTop=box.scrollHeight;
   });
 });
 
-// تحديد الرد
+// تحديد رد
 function setReply(data){
   replyTo={text:data.text, username:data.username};
   const preview=document.getElementById("replyPreview");
