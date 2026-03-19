@@ -97,12 +97,13 @@ button{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
+// 🔥 ضع هنا بياناتك من Firebase
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_PROJECT_ID"
+  apiKey: "AIzaSyAXGS8i2-fHN8H9FE2jylKlOF9j3sgYxDA",
+  authDomain: "star-8444d.firebaseapp.com",
+  projectId: "star-8444d"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -111,19 +112,26 @@ const db = getFirestore(app);
 let myUsername="";
 let replyTo=null;
 
-// حفظ الاسم
+// حفظ الاسم وتشغيل الشات تلقائي
 window.onload=function(){
   const saved=localStorage.getItem("myUsername");
-  if(saved) document.getElementById("username").value=saved;
+
+  if(saved){
+    myUsername = saved; // 🔥 مهم جدًا
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("chatBox").style.display="block";
+    document.getElementById("username").value = saved;
+  }
 }
 
+// التحقق من كلمة السر
 window.checkPassword=function(){
   const user=document.getElementById("username").value.trim();
   const pass=document.getElementById("password").value;
 
   if(!user){alert("اكتب اسمك");return;}
 
-  if(pass==="7/11/2024"){
+  if(pass==="7/11/2024"){ // 🔑 غير كلمة السر لو حبيت
     myUsername=user;
     localStorage.setItem("myUsername",user);
     document.getElementById("loginBox").style.display="none";
@@ -133,16 +141,13 @@ window.checkPassword=function(){
   }
 }
 
-// ألوان عشوائية
-const colors={};
+// ألوان ثابتة لكل شخص
 function getColor(name){
-  if(!colors[name]){
-    colors[name]='#'+Math.floor(Math.random()*16777215).toString(16);
-  }
-  return colors[name];
+  if(name === myUsername) return "#ff4d6d"; // لونك
+  else return "#6a5acd"; // لون الشخص الآخر
 }
 
-// إرسال
+// إرسال رسالة
 window.sendMessage=async function(){
   const text=document.getElementById("msgInput").value;
   if(!text.trim()) return;
@@ -159,22 +164,20 @@ window.sendMessage=async function(){
   document.getElementById("replyPreview").style.display="none";
 }
 
-// عرض
+// عرض الرسائل
 const q=query(collection(db,"messages"),orderBy("time"));
 
 onSnapshot(q,(snapshot)=>{
   const box=document.getElementById("messages");
   box.innerHTML="";
 
-  snapshot.forEach(doc=>{
-    const data=doc.data();
+  snapshot.forEach(docu=>{
+    const data=docu.data();
     const div=document.createElement("div");
     div.className="message "+(data.username===myUsername?"right":"left");
+    div.style.background=getColor(data.username);
 
-    div.style.background=data.username===myUsername?
-      "#ff4d6d":getColor(data.username);
-
-    // لو فيها رد
+    // لو الرسالة رد
     if(data.reply){
       div.innerHTML+=`
       <div style="
@@ -195,41 +198,28 @@ onSnapshot(q,(snapshot)=>{
       <span class="time">
       ${new Date(data.time).toLocaleDateString("ar-EG")}
       ${new Date(data.time).toLocaleTimeString("ar-EG")}
-      </span>`;
+      </span>
+      <button class="delete" onclick="deleteMessage('${docu.id}')">❌</button>
+    `;
 
-    // سحب ناعم
+    // سحب ناعم لتحديد الرد
     let startX=0;
-
-    div.addEventListener("touchstart",e=>{
-      startX=e.touches[0].clientX;
-    });
-
+    div.addEventListener("touchstart",e=>{startX=e.touches[0].clientX;});
     div.addEventListener("touchmove",e=>{
       let move=e.touches[0].clientX-startX;
-      if(move>0){
-        div.style.transform=`translateX(${move}px)`;
-      }
-      if(move>80){
-        setReply(data);
-      }
+      if(move>0){div.style.transform=`translateX(${move}px)`;}
+      if(move>80){setReply(data);}
     });
-
-    div.addEventListener("touchend",()=>{
-      div.style.transform="translateX(0)";
-    });
+    div.addEventListener("touchend",()=>{div.style.transform="translateX(0)";});
 
     box.appendChild(div);
     box.scrollTop=box.scrollHeight;
   });
 });
 
-// تحديد رد
+// تحديد الرد
 function setReply(data){
-  replyTo={
-    text:data.text,
-    username:data.username
-  };
-
+  replyTo={text:data.text, username:data.username};
   const preview=document.getElementById("replyPreview");
   preview.innerHTML=`
     <b>رد على ${data.username}</b><br>
@@ -242,6 +232,18 @@ window.cancelReply=function(){
   replyTo=null;
   document.getElementById("replyPreview").style.display="none";
 }
+
+// حذف الرسالة
+window.deleteMessage=async function(id){
+  if(confirm("تمسح؟")){
+    await deleteDoc(doc(db,"messages",id));
+  }
+}
+
+// إرسال بالضغط على Enter
+document.getElementById("msgInput").addEventListener("keypress",function(e){
+  if(e.key==="Enter"){sendMessage();}
+});
 </script>
 
 </body>
